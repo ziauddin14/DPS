@@ -19,4 +19,5 @@ export const DEPENDENCY_OPTIONS = [
   { value: 'Social Media', label: 'Social Media' },
   { value: 'Construction Dept', label: 'Construction Dept' },
   { value: 'FGRF', label: 'FGRF' },
+  { value: 'Supply Chain', label: 'Supply Chain' },
 ];

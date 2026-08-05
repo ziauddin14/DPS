@@ -49,7 +49,7 @@ export function exportToPDF(tasks, settings, statusFilter = 'All', lang = 'en') 
 
   return sharedExportPDF(tasks, {
     title: reportTitle,
-    columns: [t.colTitle, t.colDescription, t.colPriority, t.colStatus, t.colDepartment, t.colDependency, t.colDeadline],
+    columns: [t.colTitle, t.colDescription, t.colPriority, t.colStatus, t.colDepartment, t.colDependency, t.colDeadline, 'Delay Reason'],
     mapRow: (task) => [
       task.title,
       task.description || '-',
@@ -57,7 +57,8 @@ export function exportToPDF(tasks, settings, statusFilter = 'All', lang = 'en') 
       translateStatus(task.status),
       task.department || 'ETD',
       Array.isArray(task.dependency) ? task.dependency.join(', ') : (task.dependency || t.none),
-      task.deadline ? formatDate(task.deadline, settings?.dateFormat || 'YYYY-MM-DD') : t.noDeadline
+      task.deadline ? formatDate(task.deadline, settings?.dateFormat || 'YYYY-MM-DD') : t.noDeadline,
+      task.delayReason || '-'
     ],
     prefix: 'tasks',
     useLandscape: true,

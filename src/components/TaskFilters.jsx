@@ -14,6 +14,7 @@ const STATUS_OPTIONS = [
   { value: 'Pending', label: 'Pending' },
   { value: 'In Progress', label: 'In Progress' },
   { value: 'Completed', label: 'Completed' },
+  { value: 'Overdue', label: 'Overdue' },
 ];
 
 const DEPARTMENT_OPTIONS = [
@@ -26,6 +27,22 @@ const DEPARTMENT_OPTIONS = [
 const FILTER_DEPENDENCY_OPTIONS = [
   { value: 'All', label: 'Dependency: All' },
   ...DEPENDENCY_OPTIONS,
+];
+
+const MONTH_OPTIONS = [
+  { value: 'All', label: 'Month: All' },
+  { value: '0', label: 'January' },
+  { value: '1', label: 'February' },
+  { value: '2', label: 'March' },
+  { value: '3', label: 'April' },
+  { value: '4', label: 'May' },
+  { value: '5', label: 'June' },
+  { value: '6', label: 'July' },
+  { value: '7', label: 'August' },
+  { value: '8', label: 'September' },
+  { value: '9', label: 'October' },
+  { value: '10', label: 'November' },
+  { value: '11', label: 'December' },
 ];
 
 /**
@@ -43,6 +60,8 @@ function TaskFilters({
   onStatusChange,
   dependency,
   onDependencyChange,
+  month,
+  onMonthChange,
   onClearFilters,
 }) {
 
@@ -113,6 +132,18 @@ function TaskFilters({
           value={dependency}
           onChange={(e) => onDependencyChange(e.target.value)}
           options={FILTER_DEPENDENCY_OPTIONS}
+          wrapperClassName="flex-1 sm:flex-initial min-w-[120px]"
+          className="text-xs sm:text-sm font-bold"
+        />
+
+        {/* Month select */}
+        <Select
+          label="Filter by Month"
+          id="month-filter"
+          labelHidden
+          value={month}
+          onChange={(e) => onMonthChange(e.target.value)}
+          options={MONTH_OPTIONS}
           wrapperClassName="flex-1 sm:flex-initial min-w-[120px]"
           className="text-xs sm:text-sm font-bold"
         />

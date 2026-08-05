@@ -65,6 +65,7 @@ const reportUr = {
   statusInProgress: 'جاری',
   statusCompleted: 'مکمل',
   statusWaitingReply: 'جواب کے منتظر',
+  statusOverdue: 'میعاد ختم',
 };
 
 export default reportUr;

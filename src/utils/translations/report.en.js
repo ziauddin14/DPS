@@ -65,6 +65,7 @@ const reportEn = {
   statusInProgress: 'In Progress',
   statusCompleted: 'Completed',
   statusWaitingReply: 'Waiting Reply',
+  statusOverdue: 'Overdue',
 };
 
 export default reportEn;

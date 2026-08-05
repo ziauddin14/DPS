@@ -6,6 +6,7 @@ import TaskTable from '../components/TaskTable';
 import TaskTableSkeleton from '../components/TaskTableSkeleton';
 import EmptyState from '../components/EmptyState';
 import TaskModal from '../components/TaskModal';
+import ViewTaskModal from '../components/ViewTaskModal';
 import ConfirmModal from '../components/ConfirmModal';
 import Toast from '../components/Toast';
 import ExportDropdown from '../components/ExportDropdown';
@@ -27,6 +28,7 @@ const DEFAULT_FILTERS = {
   priority: 'All',
   status: 'All',
   dependency: 'All',
+  month: 'All',
 };
 
 // Number of skeleton cards shown while loading
@@ -56,11 +58,16 @@ function Tasks() {
   const [priority, setPriority] = useState(DEFAULT_FILTERS.priority);
   const [status, setStatus] = useState(DEFAULT_FILTERS.status);
   const [dependency, setDependency] = useState(DEFAULT_FILTERS.dependency);
+  const [month, setMonth] = useState(DEFAULT_FILTERS.month);
 
   // Task modal state
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState('add');
   const [selectedTask, setSelectedTask] = useState(null);
+
+  // View task modal state
+  const [isViewModalOpen, setIsViewModalOpen] = useState(false);
+  const [viewTask, setViewTask] = useState(null);
 
   // Confirm-delete modal state
   const [confirmOpen, setConfirmOpen] = useState(false);
@@ -89,6 +96,7 @@ function Tasks() {
     if (filters.priority && filters.priority !== 'All') params.priority   = filters.priority;
     if (filters.status   && filters.status   !== 'All') params.status     = filters.status;
     if (filters.dependency && filters.dependency !== 'All') params.dependency = filters.dependency;
+    if (filters.month && filters.month !== 'All')       params.month       = filters.month;
 
     try {
       const response = await taskService.getAllTasks(params);
@@ -117,8 +125,8 @@ function Tasks() {
   // Re-fetch when debouncedSearch (delayed) or any instant filter changes.
   // Department, priority, status, dependency are always immediate; search waits for debounce.
   useEffect(() => {
-    fetchTasks({ search: debouncedSearch, department, priority, status, dependency });
-  }, [debouncedSearch, department, priority, status, dependency, fetchTasks]);
+    fetchTasks({ search: debouncedSearch, department, priority, status, dependency, month });
+  }, [debouncedSearch, department, priority, status, dependency, month, fetchTasks]);
 
   // ── Filter handlers ──────────────────────────────────────────────────────
 
@@ -129,6 +137,7 @@ function Tasks() {
     setPriority(DEFAULT_FILTERS.priority);
     setStatus(DEFAULT_FILTERS.status);
     setDependency(DEFAULT_FILTERS.dependency);
+    setMonth(DEFAULT_FILTERS.month);
   };
 
   // ── Task modal handlers ──────────────────────────────────────────────────
@@ -157,7 +166,7 @@ function Tasks() {
 
       if (response.success) {
         setIsModalOpen(false);
-        fetchTasks({ search: debouncedSearch, department, priority, status, dependency });
+        fetchTasks({ search: debouncedSearch, department, priority, status, dependency, month });
         showToast(
           modalMode === 'edit' ? 'Task updated successfully.' : 'Task created successfully.',
           'success'
@@ -182,12 +191,49 @@ function Tasks() {
       });
 
       if (response.success) {
-        fetchTasks({ search: debouncedSearch, department, priority, status, dependency });
+        fetchTasks({ search: debouncedSearch, department, priority, status, dependency, month });
       } else {
         showToast(response.message || 'Failed to update task status.', 'error');
       }
     } catch {
       showToast('Failed to update task status on the server.', 'error');
+    }
+  };
+
+  // ── View task modal handlers ──────────────────────────────────────────────────
+
+  const handleViewClick = (task) => {
+    setViewTask(task);
+    setIsViewModalOpen(true);
+  };
+
+  const handleViewEdit = async (taskId, taskData) => {
+    try {
+      const response = await taskService.updateTask(taskId, taskData);
+      if (response.success) {
+        setIsViewModalOpen(false);
+        fetchTasks({ search: debouncedSearch, department, priority, status, dependency, month });
+        showToast('Task updated successfully.', 'success');
+      } else {
+        showToast(response.message || 'Failed to update task.', 'error');
+      }
+    } catch {
+      showToast('An error occurred while updating your task. Please try again.', 'error');
+    }
+  };
+
+  const handleViewDelete = async (taskId) => {
+    try {
+      const response = await taskService.deleteTask(taskId);
+      if (response.success) {
+        setIsViewModalOpen(false);
+        fetchTasks({ search: debouncedSearch, department, priority, status, dependency, month });
+        showToast('Task deleted successfully.', 'success');
+      } else {
+        showToast(response.message || 'Failed to delete task.', 'error');
+      }
+    } catch {
+      showToast('Failed to delete task on the server.', 'error');
     }
   };
 
@@ -205,13 +251,13 @@ function Tasks() {
     try {
       const response = await taskService.deleteTask(taskToDelete._id);
       if (response.success) {
-        fetchTasks({ search: debouncedSearch, department, priority, status, dependency });
+        fetchTasks({ search: debouncedSearch, department, priority, status, dependency, month });
         showToast('Task deleted successfully.', 'success');
       } else {
         showToast(response.message || 'Failed to delete task.', 'error');
       }
     } catch {
-      showToast('Failed to delete task from the server.', 'error');
+      showToast('Failed to delete task on the server.', 'error');
     } finally {
       setTaskToDelete(null);
     }
@@ -391,6 +437,8 @@ function Tasks() {
         onStatusChange={setStatus}
         dependency={dependency}
         onDependencyChange={setDependency}
+        month={month}
+        onMonthChange={setMonth}
         onClearFilters={handleClearFilters}
       />
 
@@ -408,6 +456,7 @@ function Tasks() {
           onDelete={handleDeleteClick}
           onConvertToFollowup={handleConvertToFollowup}
           onConvertToProject={handleConvertToProject}
+          onView={handleViewClick}
         />
       )}
 
@@ -468,6 +517,34 @@ function Tasks() {
         } : undefined}
         onSave={handleSaveFollowupConversion}
         tasks={[taskToConvert].filter(Boolean)}
+      />
+
+      {/* ── Convert to Project Modal ──────────────────────────────────── */}
+      <ProjectModal
+        isOpen={isProjectModalOpen}
+        onClose={() => {
+          setIsProjectModalOpen(false);
+          setTaskToConvert(null);
+        }}
+        mode="add"
+        project={taskToConvert ? {
+          title: taskToConvert.title,
+          description: taskToConvert.description,
+          relatedTask: taskToConvert._id,
+          department: taskToConvert.department,
+          priority: taskToConvert.priority,
+          deadline: taskToConvert.deadline
+        } : undefined}
+        onSave={handleSaveProjectConversion}
+      />
+
+      {/* ── View Task Modal ──────────────────────────────────────────── */}
+      <ViewTaskModal
+        isOpen={isViewModalOpen}
+        onClose={() => setIsViewModalOpen(false)}
+        task={viewTask}
+        onEdit={handleViewEdit}
+        onDelete={handleViewDelete}
       />
 
       {/* ── Convert to Project Modal ─────────────────────────────────── */}

@@ -1,3 +1,4 @@
+import { useEffect, useRef } from 'react';
 import { Check, Edit2, Trash2, MessageCircle, ArrowRight } from 'lucide-react';
 import { Badge, Button } from './ui';
 import { useSettings } from '../context/SettingsContext';
@@ -7,8 +8,32 @@ import { generateSingleTaskMessage, openWhatsApp } from '../utils/whatsappShare'
 /**
  * TaskTable component - Professional table rendering for tasks
  */
-function TaskTable({ tasks, onEdit, onToggleComplete, onDelete, onConvertToFollowup, onConvertToProject }) {
+function TaskTable({ tasks, onEdit, onToggleComplete, onDelete, onConvertToFollowup, onConvertToProject, onView }) {
   const { settings } = useSettings();
+  const tableRef = useRef(null);
+
+  // Keyboard horizontal scrolling
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (!tableRef.current) return;
+      
+      // Only handle left/right arrow keys
+      if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
+        const scrollAmount = 200;
+        if (e.key === 'ArrowLeft') {
+          tableRef.current.scrollBy({ left: -scrollAmount, behavior: 'smooth' });
+        } else {
+          tableRef.current.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+        }
+      }
+    };
+
+    const tableElement = tableRef.current;
+    if (tableElement) {
+      tableElement.addEventListener('keydown', handleKeyDown);
+      return () => tableElement.removeEventListener('keydown', handleKeyDown);
+    }
+  }, []);
 
   // Priority badge variants
   const priorityVariants = {
@@ -22,6 +47,25 @@ function TaskTable({ tasks, onEdit, onToggleComplete, onDelete, onConvertToFollo
     Pending: 'neutral',
     'In Progress': 'info',
     Completed: 'success',
+    Overdue: 'danger',
+  };
+
+  // Computed status - returns 'Overdue' if deadline is past and task is not completed
+  const getComputedStatus = (task) => {
+    if (task.status === 'Completed') return 'Completed';
+    
+    if (task.deadline) {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const deadlineDate = new Date(task.deadline);
+      deadlineDate.setHours(0, 0, 0, 0);
+      
+      if (deadlineDate < today) {
+        return 'Overdue';
+      }
+    }
+    
+    return task.status;
   };
 
   // Department badge variants
@@ -57,7 +101,7 @@ function TaskTable({ tasks, onEdit, onToggleComplete, onDelete, onConvertToFollo
 
   return (
     <div className="bg-white border border-slate-100 rounded-2xl shadow-sm overflow-hidden">
-      <div className="overflow-x-auto">
+      <div className="overflow-x-auto" ref={tableRef} tabIndex={0}>
         <table className="w-full">
           <thead className="bg-slate-50 border-b border-slate-100 sticky top-0">
             <tr>
@@ -97,15 +141,19 @@ function TaskTable({ tasks, onEdit, onToggleComplete, onDelete, onConvertToFollo
               return (
                 <tr
                   key={task._id}
-                  className={`hover:bg-slate-50 transition-colors ${
+                  className={`hover:bg-slate-50 transition-colors cursor-pointer ${
                     isCompleted ? 'opacity-60' : ''
                   }`}
+                  onClick={() => onView && onView(task)}
                 >
                   {/* Checkbox */}
                   <td className="px-4 py-4 whitespace-nowrap">
                     <button
                       type="button"
-                      onClick={() => onToggleComplete(task)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onToggleComplete(task);
+                      }}
                       className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-colors ${
                         isCompleted
                           ? 'bg-emerald-500 border-emerald-500 text-white'
@@ -181,10 +229,10 @@ function TaskTable({ tasks, onEdit, onToggleComplete, onDelete, onConvertToFollo
                   <td className="px-4 py-4 whitespace-nowrap">
                     <div className="flex items-center gap-2">
                       <Badge
-                        variant={statusVariants[task.status] || 'neutral'}
+                        variant={statusVariants[getComputedStatus(task)] || 'neutral'}
                         className="text-[10px] uppercase tracking-wider"
                       >
-                        {task.status}
+                        {getComputedStatus(task)}
                       </Badge>
                       {task.convertedTo && (
                         <Badge variant="info" className="text-[10px] uppercase tracking-wider">
@@ -218,6 +266,9 @@ function TaskTable({ tasks, onEdit, onToggleComplete, onDelete, onConvertToFollo
                         <div className="relative group">
                           <button
                             type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                            }}
                             className="p-1.5 text-slate-400 hover:text-primary-600 hover:bg-primary-50 rounded-lg transition-colors flex items-center gap-1"
                             title="Convert task"
                             aria-label="Convert task"
@@ -229,14 +280,20 @@ function TaskTable({ tasks, onEdit, onToggleComplete, onDelete, onConvertToFollo
                           <div className="absolute right-0 top-full mt-1 w-40 bg-white border border-slate-200 rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-10">
                             <button
                               type="button"
-                              onClick={() => onConvertToFollowup && onConvertToFollowup(task)}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                onConvertToFollowup && onConvertToFollowup(task);
+                              }}
                               className="w-full px-3 py-2 text-left text-sm text-slate-700 hover:bg-slate-50 rounded-t-lg transition-colors"
                             >
                               Convert to Follow-up
                             </button>
                             <button
                               type="button"
-                              onClick={() => onConvertToProject && onConvertToProject(task)}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                onConvertToProject && onConvertToProject(task);
+                              }}
                               className="w-full px-3 py-2 text-left text-sm text-slate-700 hover:bg-slate-50 rounded-b-lg transition-colors"
                             >
                               Convert to Project
@@ -246,7 +303,10 @@ function TaskTable({ tasks, onEdit, onToggleComplete, onDelete, onConvertToFollo
                       )}
                       <button
                         type="button"
-                        onClick={() => handleWhatsAppShare(task)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleWhatsAppShare(task);
+                        }}
                         className="p-1.5 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors"
                         title="Share on WhatsApp"
                         aria-label="Share on WhatsApp"
@@ -255,7 +315,10 @@ function TaskTable({ tasks, onEdit, onToggleComplete, onDelete, onConvertToFollo
                       </button>
                       <button
                         type="button"
-                        onClick={() => onEdit(task)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onEdit(task);
+                        }}
                         className="p-1.5 text-slate-400 hover:text-primary-600 hover:bg-primary-50 rounded-lg transition-colors"
                         title="Edit task"
                         aria-label="Edit task"
@@ -264,7 +327,10 @@ function TaskTable({ tasks, onEdit, onToggleComplete, onDelete, onConvertToFollo
                       </button>
                       <button
                         type="button"
-                        onClick={() => onDelete(task)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onDelete(task);
+                        }}
                         className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"
                         title="Delete task"
                         aria-label="Delete task"

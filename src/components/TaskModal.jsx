@@ -21,6 +21,7 @@ const STATUS_OPTIONS = [
   { value: 'Pending',     label: 'Pending' },
   { value: 'In Progress', label: 'In Progress' },
   { value: 'Completed',   label: 'Completed' },
+  { value: 'Overdue',     label: 'Overdue' },
 ];
 
 /**
@@ -90,6 +91,7 @@ function TaskModal({ isOpen, onClose, mode = 'add', task, onSave }) {
       department:  formData.get('department'),
       dependency:  dependency,
       deadline:    formData.get('deadline') || undefined,
+      delayReason: formData.get('delayReason') || '',
     };
     if (onSave) onSave(data);
   };
@@ -195,6 +197,18 @@ function TaskModal({ isOpen, onClose, mode = 'add', task, onSave }) {
                   : ''
               }
             />
+
+            {/* Delay Reason - Only show if task has deadline and is overdue or in edit mode */}
+            {(isEdit || (task?.deadline && new Date(task.deadline) < new Date())) && (
+              <Textarea
+                label="Reason for Delay"
+                id="task-delay-reason"
+                name="delayReason"
+                placeholder="Enter reason for delay..."
+                rows={3}
+                defaultValue={task?.delayReason ?? ''}
+              />
+            )}
           </div>
 
           {/* Footer actions */}
