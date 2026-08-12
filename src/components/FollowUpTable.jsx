@@ -2,11 +2,14 @@ import { Edit2, Trash2, Phone, MessageCircle, ChevronDown, ChevronUp, Plus, Chec
 import { Badge, Button } from './ui';
 import { formatDate, formatTime } from '../utils/dateFormatter';
 import { useState } from 'react';
+import { useHorizontalScroll } from '../hooks/useHorizontalScroll';
 
 /**
  * FollowUpTable component - Professional table rendering for follow-ups
  */
 function FollowUpTable({ followups, onEdit, onDelete, onAddNote, onShare, onPrint, selectedRows, onToggleRow, onSelectAll }) {
+  const tableRef = useHorizontalScroll();
+
   // Priority badge variants
   const priorityVariants = {
     High: 'danger',
@@ -88,7 +91,7 @@ function FollowUpTable({ followups, onEdit, onDelete, onAddNote, onShare, onPrin
   return (
     <div className="bg-white border border-slate-100 rounded-2xl shadow-sm overflow-hidden">
       {/* Desktop/Tablet Table View */}
-      <div className="hidden md:block overflow-x-auto">
+      <div className="hidden md:block overflow-x-auto" ref={tableRef} tabIndex={0}>
         <table className="w-full">
           <thead className="bg-slate-50 border-b border-slate-100 sticky top-0">
             <tr>

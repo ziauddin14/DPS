@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { Plus, Briefcase, AlertCircle } from 'lucide-react';
 import ProjectStats from '../components/ProjectStats';
 import ProjectFilters from '../components/ProjectFilters';
-import ProjectCard from '../components/ProjectCard';
+import ProjectTable from '../components/ProjectTable';
 import ProjectCardSkeleton from '../components/ProjectCardSkeleton';
 import ProjectModal from '../components/ProjectModal';
 import EmptyState from '../components/EmptyState';
@@ -238,7 +238,7 @@ function Projects() {
         onClearFilters={handleClearFilters}
       />
 
-      {/* ── Projects Grid ────────────────────────────────────────────── */}
+      {/* ── Projects Table ──────────────────────────────────────────── */}
       {isLoading ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {Array.from({ length: SKELETON_COUNT }).map((_, i) => (
@@ -248,16 +248,11 @@ function Projects() {
       ) : projects.length === 0 ? (
         <EmptyState />
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {projects.map((project) => (
-            <ProjectCard
-              key={project._id}
-              project={project}
-              onEdit={handleEditClick}
-              onDelete={handleDeleteClick}
-            />
-          ))}
-        </div>
+        <ProjectTable
+          projects={projects}
+          onEdit={handleEditClick}
+          onDelete={handleDeleteClick}
+        />
       )}
 
       {/* ── Floating Add Project Button ────────────────────────────────── */}

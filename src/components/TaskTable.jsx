@@ -1,39 +1,16 @@
-import { useEffect, useRef } from 'react';
 import { Check, Edit2, Trash2, MessageCircle, ArrowRight } from 'lucide-react';
 import { Badge, Button } from './ui';
 import { useSettings } from '../context/SettingsContext';
 import { formatDate } from '../utils/dateFormatter';
 import { generateSingleTaskMessage, openWhatsApp } from '../utils/whatsappShare';
+import { useHorizontalScroll } from '../hooks/useHorizontalScroll';
 
 /**
  * TaskTable component - Professional table rendering for tasks
  */
 function TaskTable({ tasks, onEdit, onToggleComplete, onDelete, onConvertToFollowup, onConvertToProject, onView }) {
   const { settings } = useSettings();
-  const tableRef = useRef(null);
-
-  // Keyboard horizontal scrolling
-  useEffect(() => {
-    const handleKeyDown = (e) => {
-      if (!tableRef.current) return;
-      
-      // Only handle left/right arrow keys
-      if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
-        const scrollAmount = 200;
-        if (e.key === 'ArrowLeft') {
-          tableRef.current.scrollBy({ left: -scrollAmount, behavior: 'smooth' });
-        } else {
-          tableRef.current.scrollBy({ left: scrollAmount, behavior: 'smooth' });
-        }
-      }
-    };
-
-    const tableElement = tableRef.current;
-    if (tableElement) {
-      tableElement.addEventListener('keydown', handleKeyDown);
-      return () => tableElement.removeEventListener('keydown', handleKeyDown);
-    }
-  }, []);
+  const tableRef = useHorizontalScroll();
 
   // Priority badge variants
   const priorityVariants = {

@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { Plus, Target, AlertCircle } from 'lucide-react';
 import GoalStats from '../components/GoalStats';
 import GoalFilters from '../components/GoalFilters';
-import GoalCard from '../components/GoalCard';
+import GoalTable from '../components/GoalTable';
 import GoalCardSkeleton from '../components/GoalCardSkeleton';
 import EmptyState from '../components/EmptyState';
 import GoalModal from '../components/GoalModal';
@@ -229,7 +229,7 @@ function Goals() {
         onClearFilters={handleClearFilters}
       />
 
-      {/* ── Goals Grid ────────────────────────────────────────────── */}
+      {/* ── Goals Table ──────────────────────────────────────────── */}
       {isLoading ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {Array.from({ length: SKELETON_COUNT }).map((_, i) => (
@@ -239,16 +239,11 @@ function Goals() {
       ) : goals.length === 0 ? (
         <EmptyState />
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {goals.map((goal) => (
-            <GoalCard
-              key={goal._id}
-              goal={goal}
-              onEdit={handleEditClick}
-              onDelete={handleDeleteClick}
-            />
-          ))}
-        </div>
+        <GoalTable
+          goals={goals}
+          onEdit={handleEditClick}
+          onDelete={handleDeleteClick}
+        />
       )}
 
       {/* ── Floating Add Goal Button ────────────────────────────────── */}
